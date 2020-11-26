@@ -1,4 +1,4 @@
-﻿@model AgentieTurism.Data.Models.Statiune
+﻿@model AgentieTurism.Models.CreateStatiuneViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -17,6 +17,11 @@
                 <label asp-for="Nume" class="control-label"></label>
                 <input asp-for="Nume" class="form-control" />
                 <span asp-validation-for="Nume" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SejurAferent" class="control-label"></label>
+                <input asp-for="SejurAferent" class="form-control" />
+                <span asp-validation-for="SejurAferent" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />

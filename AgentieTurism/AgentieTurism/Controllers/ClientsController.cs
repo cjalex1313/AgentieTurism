@@ -7,26 +7,26 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AgentieTurism.Data;
 using AgentieTurism.Data.Models;
-using AgentieTurism.Models;
 
 namespace AgentieTurism.Controllers
 {
-    public class StatiunesController : Controller
+    public class ClientsController : Controller
     {
         private readonly AppDbContext _context;
 
-        public StatiunesController(AppDbContext context)
+        public ClientsController(AppDbContext context)
         {
             _context = context;
         }
 
-        // GET: Statiunes
+        // GET: Clients
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Statiuni.OrderBy(r=>r.Nume).ToListAsync());
+            var appDbContext = _context.Clienti.Include(c => c.StatiuneDorita);
+            return View(await appDbContext.ToListAsync());
         }
 
-        // GET: Statiunes/Details/5
+        // GET: Clients/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -34,54 +34,42 @@ namespace AgentieTurism.Controllers
                 return NotFound();
             }
 
-            var statiune = await _context.Statiuni
+            var client = await _context.Clienti
+                .Include(c => c.StatiuneDorita)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (statiune == null)
+            if (client == null)
             {
                 return NotFound();
             }
 
-            return View(statiune);
+            return View(client);
         }
 
-        // GET: Statiunes/Create
+        // GET: Clients/Create
         public IActionResult Create()
         {
+            ViewData["StatiuneDoritaId"] = new SelectList(_context.Statiuni, "Id", "Nume");
             return View();
         }
 
-        // POST: Statiunes/Create
+        // POST: Clients/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to, for 
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Nume,SejurAferent")] CreateStatiuneViewModel statiune)
+        public async Task<IActionResult> Create([Bind("Id,Nume,Prenume,NumarCI,SerieCI,Adresa,NrTel,PerioadaSejurDoritaStart,PerioadaSejurDoritaSfarsit,StatiuneDoritaId")] Client client)
         {
             if (ModelState.IsValid)
             {
-                if (statiune.SejurAferent)
-                {
-                    var dbStatiune = new Statiune() { Nume = statiune.Nume };
-                    var dbSejur = new Sejur();
-                    dbSejur.DataStart = DateTime.Now;
-                    dbSejur.DataSfarsit = DateTime.Now.AddDays(14);
-                    dbStatiune.Sejururi = new List<Sejur>();
-                    dbStatiune.Sejururi.Add(dbSejur);
-                    _context.Statiuni.Add(dbStatiune);
-                    await _context.SaveChangesAsync();
-                }
-                else
-                {
-                    var dbStatiune = new Statiune() { Nume = statiune.Nume };
-                    _context.Add(dbStatiune);
-                    await _context.SaveChangesAsync();
-                }
+                _context.Add(client);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(statiune);
+            ViewData["StatiuneDoritaId"] = new SelectList(_context.Statiuni, "Id", "Nume", client.StatiuneDoritaId);
+            return View(client);
         }
 
-        // GET: Statiunes/Edit/5
+        // GET: Clients/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -89,22 +77,23 @@ namespace AgentieTurism.Controllers
                 return NotFound();
             }
 
-            var statiune = await _context.Statiuni.FindAsync(id);
-            if (statiune == null)
+            var client = await _context.Clienti.FindAsync(id);
+            if (client == null)
             {
                 return NotFound();
             }
-            return View(statiune);
+            ViewData["StatiuneDoritaId"] = new SelectList(_context.Statiuni, "Id", "Nume", client.StatiuneDoritaId);
+            return View(client);
         }
 
-        // POST: Statiunes/Edit/5
+        // POST: Clients/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for 
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nume")] Statiune statiune)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nume,Prenume,NumarCI,SerieCI,Adresa,NrTel,PerioadaSejurDoritaStart,PerioadaSejurDoritaSfarsit,StatiuneDoritaId")] Client client)
         {
-            if (id != statiune.Id)
+            if (id != client.Id)
             {
                 return NotFound();
             }
@@ -113,12 +102,12 @@ namespace AgentieTurism.Controllers
             {
                 try
                 {
-                    _context.Update(statiune);
+                    _context.Update(client);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!StatiuneExists(statiune.Id))
+                    if (!ClientExists(client.Id))
                     {
                         return NotFound();
                     }
@@ -129,10 +118,11 @@ namespace AgentieTurism.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(statiune);
+            ViewData["StatiuneDoritaId"] = new SelectList(_context.Statiuni, "Id", "Nume", client.StatiuneDoritaId);
+            return View(client);
         }
 
-        // GET: Statiunes/Delete/5
+        // GET: Clients/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -140,30 +130,31 @@ namespace AgentieTurism.Controllers
                 return NotFound();
             }
 
-            var statiune = await _context.Statiuni
+            var client = await _context.Clienti
+                .Include(c => c.StatiuneDorita)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (statiune == null)
+            if (client == null)
             {
                 return NotFound();
             }
 
-            return View(statiune);
+            return View(client);
         }
 
-        // POST: Statiunes/Delete/5
+        // POST: Clients/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var statiune = await _context.Statiuni.FindAsync(id);
-            _context.Statiuni.Remove(statiune);
+            var client = await _context.Clienti.FindAsync(id);
+            _context.Clienti.Remove(client);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool StatiuneExists(int id)
+        private bool ClientExists(int id)
         {
-            return _context.Statiuni.Any(e => e.Id == id);
+            return _context.Clienti.Any(e => e.Id == id);
         }
     }
 }
